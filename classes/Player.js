@@ -53,7 +53,8 @@ class Player {
     //assume fps is 60, calculate lerpValue based on it
     var fps = 60
     var lerpValue = fps/ 500
-    var lerpTimes = timeSpentMoving / fps 
+    var lerpTimes = 50  
+    console.log(lerpTimes)
     var curPos = {
       x: undefined,
       y: undefined
@@ -62,10 +63,11 @@ class Player {
     curPos.y = this.oldSendPos.y
 
 for(var i = 0; i < Math.round(lerpTimes); i++){
-    curPos.x = lerp(curPos.x, this.posLastSent.x, lerpValue)
-    curPos.y = lerp(curPos.y, this.posLastSent.y, lerpValue)
+    curPos.x = lerp(curPos.x, this.posLastSent.x, 0.05)
+    curPos.y = lerp(curPos.y, this.posLastSent.y, 0.05)
 }
-
+curPos.x += (this.pos.x - curPos.x) / 20
+curPos.y += (this.pos.y - curPos.y) / 20
 return curPos
   }
   moveWithMouse(players) {
