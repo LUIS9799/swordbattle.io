@@ -51,21 +51,22 @@ class Player {
     //get the time spent moving on client
     var timeSpentMoving = Date.now() - this.lastPosSent
     //assume fps is 60, calculate lerpValue based on it
-    var fps = 30
+    var fps = 60
     var lerpValue = fps/ 500
-    var lerpTimes = timeSpentMoving / fps * 2
-    var pos = {
-      x: lerp(this.oldSendPos.x, this.posLastSent.x, clamp(lerpValue*lerpTimes,0, 1)),
-      y: lerp(this.oldSendPos.y, this.posLastSent.y, clamp(lerpValue*lerpTimes,0,1))
+    var lerpTimes = timeSpentMoving / fps 
+    var curPos = {
+      x: undefined,
+      y: undefined
     }
-    if((Math.abs(pos.x - this.posLastSent.x)) < 10) {
-      pos.x = this.posLastSent.x  
-    }
-    if((Math.abs(pos.y - this.posLastSent.y)) < 10) {
-      pos.y = this.posLastSent.y  
-    }
+    curPos.x = this.oldSendPos.x
+    curPos.y = this.oldSendPos.y
 
-return pos
+for(var i = 0; i < Math.round(lerpTimes); i++){
+    curPos.x = lerp(curPos.x, this.posLastSent.x, lerpValue)
+    curPos.y = lerp(curPos.y, this.posLastSent.y, lerpValue)
+}
+
+return curPos
   }
   moveWithMouse(players) {
 /*
