@@ -5,7 +5,11 @@ class TitleScene extends Phaser.Scene {
   }
  preload() {
    console.log("Loading Home Screen")
+   try {
   document.getElementsByClassName("grecaptcha-badge")[0].style.opacity = 100;
+   } catch(e) { 
+     console.warn("grecaptcha-badge not found!!!")
+   }
   this.load.image('opening', '/assets/images/opening.png');
   this.load.html("form", "/textbox.html");
   this.load.html("promo", "/promo.html");

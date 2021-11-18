@@ -20,6 +20,8 @@ class Player {
     this.speed = 700
     this.scale = 0.25
     this.lastPosSent = Date.now()
+    this.posLastSent = this.pos
+    this.oldSendPos = this.pos
     this.damage = 10
 
     if(["devil"].includes(name.toLowerCase())) {
@@ -42,14 +44,28 @@ class Player {
     this.lastMove = Date.now()
   }
   predictPosition() {
+    function lerp (start, end, amt){
+      return (1-amt)*start+amt*end
+    }
+    const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
     //get the time spent moving on client
     var timeSpentMoving = Date.now() - this.lastPosSent
     //assume fps is 60, calculate lerpValue based on it
-    var fps = 60
+    var fps = 30
     var lerpValue = fps/ 500
-    var lerpTimes = timeSpentMoving / fps
-    
+    var lerpTimes = timeSpentMoving / fps * 2
+    var pos = {
+      x: lerp(this.oldSendPos.x, this.posLastSent.x, clamp(lerpValue*lerpTimes,0, 1)),
+      y: lerp(this.oldSendPos.y, this.posLastSent.y, clamp(lerpValue*lerpTimes,0,1))
+    }
+    if((Math.abs(pos.x - this.posLastSent.x)) < 10) {
+      pos.x = this.posLastSent.x  
+    }
+    if((Math.abs(pos.y - this.posLastSent.y)) < 10) {
+      pos.y = this.posLastSent.y  
+    }
 
+return pos
   }
   moveWithMouse(players) {
 /*

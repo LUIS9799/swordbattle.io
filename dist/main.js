@@ -222,8 +222,8 @@ this.callback({win: true, data:data})
         
         this.meSword = this.add.image(400, 100, "sword").setScale(0.25).setDepth(50)
         this.mePlayer = this.add.image(400, 100, "player").setScale(0.25).setDepth(51)
-        this.meCircle =  this.add.circle(0, 0, 50, 0xFF0000).setDepth(567)
-        
+        this.meCircle =  this.add.circle(0, 0, 30, 0xFF0000).setDepth(567)
+        this.meCircle1 =  this.add.circle(0, 0, 10, 0x00FF00).setDepth(568)
 
 
         this.swordAnim = {go: false, added: 0}
@@ -313,7 +313,7 @@ this.callback({win: true, data:data})
         
         this.UICam = this.cameras.add(this.cameras.main.x, this.cameras.main.y, window.visualViewport.width, window.visualViewport.height);
         this.cameras.main.ignore([ this.killCount, this.playerCount, this.leaderboard, this.lvlBar.bar ]);
-        this.UICam.ignore([this.meCircle, this.mePlayer, this.meBar.bar, this.meSword, this.background, this.void])
+        this.UICam.ignore([this.meCircle, this.meCircle1,this.mePlayer, this.meBar.bar, this.meSword, this.background, this.void])
         this.cameras.main.startFollow(this.mePlayer);
 
         console.log("Camera loaded")
@@ -491,6 +491,10 @@ this.callback({win: true, data:data})
             this.ready = true
            
             }
+        })
+        this.socket.on("predictedPos", (pp) => {
+            this.meCircle1.x = pp.x
+            this.meCircle1.y = pp.y
         })
         this.socket.on("me", (player) => {
             if(this.loadrect.visible) {
@@ -1121,7 +1125,11 @@ class TitleScene extends Phaser.Scene {
   }
  preload() {
    console.log("Loading Home Screen")
+   try {
   document.getElementsByClassName("grecaptcha-badge")[0].style.opacity = 100;
+   } catch(e) { 
+     console.warn("grecaptcha-badge not found!!!")
+   }
   this.load.image('opening', '/assets/images/opening.png');
   this.load.html("form", "/textbox.html");
   this.load.html("promo", "/promo.html");

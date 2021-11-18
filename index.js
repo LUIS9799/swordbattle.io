@@ -331,6 +331,16 @@ setInterval(async () => {
       player.health += player.health / 100;
     }
     player.lastPosSent = Date.now()
+    player.oldSendPos = player.posLastSent
+   player.posLastSent = {}
+   var pos = {
+     x: undefined,
+     y: undefined
+   }
+   pos.x = player.pos.x
+   pos.y =player.pos.y
+   player.posLastSent = pos
+
     PlayerList.updatePlayer(player)
 
     //emit player data to all clients
@@ -344,17 +354,19 @@ setInterval(async () => {
   }
   });
   tps += 1;
-}, 1000 / 5);
+}, 1000 / 30);
 
-//get ping 
+//hmm
 setInterval(async () => {
   var playersarray = Object.values(PlayerList.players);
   var sockets = await io.fetchSockets();
 
   sockets.forEach((socket)=>{
-    
+    playersarray.forEach((player) => {
+      if(player.id === socket.id ) socket.emit("predictedPos", player.predictPosition())
+    })
   })
-}, 2000)
+}, 1000/60)
 
 server.listen(process.env.PORT || 3000, () => {
   console.log('server started');
