@@ -61,10 +61,11 @@ if(!this.target || !this.entityExists(this.target,this.getEntities())) this.targ
     }
     getEntities() {
       var players = Object.values(PlayerList.players).filter(p=>p && p.id !== this.id && Date.now() - p.joinTime > 5000)
+     //var players = Object.values(PlayerList.players).filter(p=>p && p.id !== this.id && Date.now() - p.joinTime > 5000 && p.ai)
       var entities = players.concat(CoinList.coins)
       
       return (this.coins < 5000 && Date.now() - this.joinTime < 5000 ? CoinList.coins : (this.coins < 5000 ? entities : players))
-      //return players
+     // return players
     }
     getTpos() {
       try {

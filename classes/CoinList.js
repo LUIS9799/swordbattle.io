@@ -1,12 +1,13 @@
-
+const db = require('quick.db');
+const Coin = require('./Coin');
+var coinstable = new db.table('coins')
 class CoinList {
 
     static getCoin(id) {
-      if(this.coins.hasOwnProperty(id)) return this.coins[id]
-      else return undefined
+        return coinstable.get(id)
     }
     static addCoin(coin) {
-      this.coins.push(coin)
+        coinstable.set(coin.id, coin)
     }
     static addCoins(coins) {
         coins.forEach(coin => {
@@ -14,8 +15,15 @@ class CoinList {
         });
     }
     static deleteCoin(id) {
-        this.coins = this.coins.filter(obj => obj.id !== id)    
+        coinstable.delete(id)
+    }
+    static get coins() {
+      var all = coinstable.all()
+      var coins = []
+      all.forEach((a) => {
+        coins.push(Coin.fromJson(a.data))
+      })
+      return coins
     }
   }
-  CoinList.coins = []
   module.exports = CoinList

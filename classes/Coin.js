@@ -13,6 +13,14 @@ function getRandomInt(min, max) {
       this.pos = pos
       
     }
+    static fromJson(json) {
+      var json = JSON.parse(json)
+      var obj = new this(json.pos)
+      obj.id = json.id
+      obj.size = json.size
+      obj.radius = json.radius
+      return obj
+    }
     touchingPlayer(player) {
       const distance = (x1, y1, x2, y2) => Math.hypot(x2 - x1, y2 - y1); 
       //var rex = distance(player.pos.x, player.pos.y, player.lastPos.x, player.lastPos.y) * 2

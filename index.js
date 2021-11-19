@@ -269,6 +269,7 @@ setInterval(async () => {
 //console.log(`The script uses approximately ${Math.round(used * 100) / 100} MB`);
   PlayerList.clean()
   moderation.io = io
+
   if (CoinList.coins.length < maxCoins) {
     var newCoin = new Coin();
     CoinList.addCoin(newCoin);
@@ -354,6 +355,7 @@ setInterval(async () => {
   }
   });
   tps += 1;
+  
 }, 1000 / 30);
 
 //hmm

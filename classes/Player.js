@@ -54,7 +54,7 @@ class Player {
     var fps = 60
     var lerpValue = fps/ 500
     var lerpTimes = 50  
-    console.log(lerpTimes)
+
     var curPos = {
       x: undefined,
       y: undefined
@@ -145,7 +145,7 @@ this.pos.y = pos[1]
         point[1] - (Math.cos(angle) * distance)
     ];
   }
-  async dropCoins() {
+  dropCoins() {
     const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
   var drop = []
 
@@ -160,7 +160,7 @@ this.pos.y = pos[1]
         y: clamp(y, -2500, 2500),
       }))
   }
-
+console.log(drop.length)
   CoinList.addCoins(drop)
   return drop
   }
@@ -171,7 +171,6 @@ this.pos.y = pos[1]
     this.pos.y = clamp(pos[1],-2500, 2500)
   }
   collectCoins(io, levels) {
-   
            var touching = CoinList.coins.filter((coin) => coin.touchingPlayer(this));
 
         touching.forEach((coin) => {
@@ -310,13 +309,13 @@ return false
               }
               //drop their coins
 
-              enemy.dropCoins().then((drop) => {
+              var drop = enemy.dropCoins()
               if(!enemy.ai && socketById) {
               socketById.broadcast.emit('coin', drop);
               } else {
                 io.sockets.emit('coin', drop)
               }
-            })
+            
             
               //log a message
               console.log(this.name+' killed ' + enemy.name);
