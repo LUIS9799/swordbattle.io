@@ -14,14 +14,18 @@ class OpenScene extends Phaser.Scene {
         this.callback = callback
     }
     preload() {
-
+        this.go = false
         console.log("Starting sword.io")
         console.log("Loading assets")
+
         this.load.plugin("rexvirtualjoystickplugin",    "https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexvirtualjoystickplugin.min.js", true);
+
         this.load.image("playerPlayer", "/assets/images/player.png");
         this.load.image("playerSword", "/assets/images/sword.png");
         this.load.image("devilPlayer", "/assets/images/devilPlayer.png");
         this.load.image("devilSword", "/assets/images/devilSword.png");
+        this.load.image("codergautamytPlayer", "/assets/images/codergautamytPlayer.png");
+        this.load.image("codergautamytSword", "/assets/images/codergautamytSword.png");
         this.load.image('background', '/assets/images/background.jpeg');
         this.load.image('coin', '/assets/images/coin.png');
 
@@ -30,13 +34,20 @@ class OpenScene extends Phaser.Scene {
         this.load.audio('hit', '/assets/sound/hitenemy.wav');
         this.load.audio('winSound', '/assets/sound/win.m4a');
         this.load.audio('loseSound', '/assets/sound/lost.mp3');
+
+        this.load.image('opening', '/assets/images/opening.png');
+        this.load.html("title", "/title.html");
+        this.load.html("promo", "/promo.html");
+        this.load.audio('openingsound', '/assets/sound/opening.mp3')
+
         console.log("Assets loaded!")
     }
 
     create() {
         console.log("Rendering screen..")
-        this.go = false
+   
         this.background = this.add.rectangle(0, 0, window.visualViewport.width, window.visualViewport.height, 0x000000).setOrigin(0).setScrollFactor(0, 0).setScale(2);
+
         this.text = this.add.text(window.visualViewport.width / 2, window.visualViewport.height / 2, 'Click to join the game..', {
             fontSize: '64px',
             fill: '#FFFFFF'
@@ -66,7 +77,9 @@ class OpenScene extends Phaser.Scene {
         this.text.y = (window.visualViewport.height / 2)
         this.text.setFontSize(window.visualViewport.width * 128 / 1920)
         if(!this.go) {
+          
         if(this.text.alpha < 1) this.text.setAlpha(this.text.alpha + 0.01)
+        
         } else {
             if(this.text.alpha > 0 )this.text.setAlpha(this.text.alpha - 0.05)
             else this.scene.start('title')

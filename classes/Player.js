@@ -14,7 +14,7 @@ class Player {
     this.name = name
     this.health = 100
     this.level = 1
-    this.coins = 0
+    this.coins = 1000
     this.pos = {x: getRandomInt(-250,250), y: getRandomInt(-250,250)}
     this.kills = 0
     this.speed = 700
@@ -24,7 +24,7 @@ class Player {
     this.oldSendPos = this.pos
     this.damage = 10
 
-    if(["devil"].includes(name.toLowerCase())) {
+    if(["devil", "codergautamyt"].includes(name.toLowerCase())) {
       this.skin = name.toLowerCase()
     } else this.skin = "player"
 
@@ -43,33 +43,7 @@ class Player {
     this.radius = this.size / 2
     this.lastMove = Date.now()
   }
-  predictPosition() {
-    function lerp (start, end, amt){
-      return (1-amt)*start+amt*end
-    }
-    const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
-    //get the time spent moving on client
-    var timeSpentMoving = Date.now() - this.lastPosSent
-    //assume fps is 60, calculate lerpValue based on it
-    var fps = 60
-    var lerpValue = fps/ 500
-    var lerpTimes = 50  
 
-    var curPos = {
-      x: undefined,
-      y: undefined
-    }
-    curPos.x = this.oldSendPos.x
-    curPos.y = this.oldSendPos.y
-
-for(var i = 0; i < Math.round(lerpTimes); i++){
-    curPos.x = lerp(curPos.x, this.posLastSent.x, 0.05)
-    curPos.y = lerp(curPos.y, this.posLastSent.y, 0.05)
-}
-curPos.x += (this.pos.x - curPos.x) / 20
-curPos.y += (this.pos.y - curPos.y) / 20
-return curPos
-  }
   moveWithMouse(players) {
 /*
     var players = Object.values(players)
@@ -149,7 +123,7 @@ this.pos.y = pos[1]
     const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
   var drop = []
 
-  for (var i = 0; i < clamp(this.coins * 0.8, 10, 2000); i++) {
+  for (var i = 0; i < clamp(this.coins * 0.8, 10, 100); i++) {
     var r = this.radius * this.scale * Math.sqrt(Math.random());
     var theta = Math.random() * 2 * Math.PI;
     var x = this.pos.x + r * Math.cos(theta);
@@ -160,7 +134,6 @@ this.pos.y = pos[1]
         y: clamp(y, -2500, 2500),
       }))
   }
-console.log(drop.length)
   CoinList.addCoins(drop)
   return drop
   }
@@ -257,6 +230,7 @@ return false
     this.resistance = convert(0.25, 20, this.scale)
   }
   down(down, io) {
+   if(!this.ai) this.dropCoins()
     this.mouseDown = down;
     this.checkCollisions(io)
   }
