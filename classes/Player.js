@@ -1,7 +1,6 @@
 var intersects = require("intersects");
 const PlayerList = require("./PlayerList");
 const Coin = require("./Coin.js");
-const {sql} = require("../database");
 function getRandomInt(min, max) {
   return min + Math.floor(Math.random() * (max - min + 1));
 }
@@ -135,7 +134,7 @@ this.pos.y = pos[1]
               if(!this.ai) {
               var socketById = io.sockets.sockets.get(this.id);
               
-              sql`INSERT INTO games (id, name, coins, kills, time) VALUES (${this.id}, ${this.name}, ${this.coins}, ${this.kills}, ${Date.now() - this.joinTime})`;
+  
               
               socketById.emit("youWon", {
                 timeSurvived: Date.now() - this.joinTime,
@@ -261,7 +260,6 @@ return false;
             if (enemy.health <= 0) {
              
               //enemy has 0 or less than 0 health, time to kill
-              sql`INSERT INTO games (id, name, coins, kills, time) VALUES (${enemy.id}, ${enemy.name}, ${enemy.coins}, ${enemy.kills}, ${Date.now() - enemy.joinTime})`;
 
               //increment killcount by 1
               this.kills += 1;
