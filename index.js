@@ -33,7 +33,6 @@ const Player = require("./classes/Player");
 const Coin = require("./classes/Coin");
 const AiPlayer = require("./classes/AiPlayer");
 const PlayerList = require("./classes/PlayerList");
-const { sql } = require("./database");
 
 const io = new Server(server, {
 	allowRequest: (req, callback) => {
