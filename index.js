@@ -27,7 +27,7 @@ const Filter = require("purgomalum-swear-filter");
 var filter = new Filter();
 const moderation = require("./moderation");
 const { v4: uuidv4 } = require("uuid");
-var recaptcha = true;
+var recaptcha = false;
 
 const Player = require("./classes/Player");
 const Coin = require("./classes/Coin");
@@ -121,11 +121,6 @@ app.use(cors());
 
 app.use("/", express.static("dist"));
 app.use("/assets", express.static("assets"));
-
-app.get("/leaderboard", async (req, res) => {
-	var lb= await sql`SELECT * FROM games ORDER BY coins DESC LIMIT 10`;
-	res.render("leaderboard.ejs", {lb: lb});
-});
 
 
 Object.filter = (obj, predicate) =>
