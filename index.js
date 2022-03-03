@@ -8,6 +8,36 @@ var emailValidator = require("email-validator");
 const bcrypt = require("bcrypt");
 var uuid = require("uuid");
 var fs = require("fs");
+
+// Import the functions you need from the SDKs you need
+const { initializeApp } =  require("firebase/app");
+const {getFirestore,collection,addDoc} = require("firebase/firestore");
+
+const firebaseConfig = {
+  apiKey: process.env.apiKey,
+  authDomain: process.env.authDomain,
+  databaseURL: process.env.databaseURL,
+  projectId: process.env.projectId,
+  storageBucket: process.env.storageBucket,
+  messagingSenderId: process.env.messagingSenderId,
+  appId: process.env.appId,
+};
+
+// Initialize Firebase
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+
+
+try {
+	const docRef = addDoc(collection(db, "games"), {
+	  coins: 10
+	}).then((e) => {
+	console.log("Document written with ID: ", docRef.id);
+	});
+  } catch (e) {
+	console.error("Error adding document: ", e);
+  }
+
 //var cors = require("cors");
 
 var server;
