@@ -11,14 +11,14 @@ var fs = require("fs");
 
 // Import the functions you need from the SDKs you need
 const { initializeApp } =  require("firebase/app");
-const {getFirestore,collection,addDoc} = require("firebase/firestore");
+const {getFirestore,collection,addDoc, Timestamp} = require("firebase/firestore");
 
 const firebaseConfig = {
   apiKey: process.env.apiKey,
-  authDomain: process.env.authDomain,
-  databaseURL: process.env.databaseURL,
+  authDomain: process.env.projectId + ".firebaseapp.com",
+  databaseURL: "https://"+process.env.projectId+".firebaseio.com",
   projectId: process.env.projectId,
-  storageBucket: process.env.storageBucket,
+  storageBucket: process.env.projectId + ".appspot.com",
   messagingSenderId: process.env.messagingSenderId,
   appId: process.env.appId,
 };
@@ -28,15 +28,7 @@ const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
 
 
-try {
-	const docRef = addDoc(collection(db, "games"), {
-	  coins: 10
-	}).then((e) => {
-	console.log("Document written with ID: ", docRef.id);
-	});
-  } catch (e) {
-	console.error("Error adding document: ", e);
-  }
+
 
 //var cors = require("cors");
 
@@ -76,7 +68,6 @@ const Coin = require("./classes/Coin");
 const Chest = require("./classes/Chest");
 const AiPlayer = require("./classes/AiPlayer");
 const PlayerList = require("./classes/PlayerList");
-const { sql } = require("./database");
 
 const io = new Server(server, { cors: { origin: "*" }});
 function getRandomInt(min, max) {
@@ -588,7 +579,24 @@ io.on("connection", async (socket) => {
 	socket.on("disconnect", () => {
 		if (!PlayerList.has(socket.id)) return;
 		var thePlayer = PlayerList.getPlayer(socket.id);
-		sql`INSERT INTO games (id, name, coins, kills, time, verified) VALUES (${thePlayer.id}, ${thePlayer.name}, ${thePlayer.coins}, ${thePlayer.kills}, ${Date.now() - thePlayer.joinTime}, ${thePlayer.verified})`;
+		var dbObj = {
+			id: thePlayer.id,
+			name: thePlayer.name,
+			skin: thePlayer.skin,
+			coins: thePlayer.coins,
+			kills: thePlayer.kills,
+			time: Date.now() - thePlayer.joinTime,
+			verified: thePlayer.verified,
+			created_at: Timestamp.fromDate(new Date()),
+		};
+		
+		try {
+			const docRef = addDoc(collection(db, "games"), dbObj).then((e) => {
+			
+			});
+		} catch (e) {
+			console.error("Error adding document: ", e);
+		}
 		PlayerList.deletePlayer(socket.id);
 		socket.broadcast.emit("playerLeave", socket.id);
 	});

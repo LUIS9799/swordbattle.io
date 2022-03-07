@@ -265,9 +265,9 @@ class GameScene extends Phaser.Scene {
 
 				window.addEventListener("resize", resize, true);
 				//go packet
-				var server = this.scene.get("open").server == "us" ? "https://swordbattle.codergautamyt.repl.co" : "https://swordbattle.herokuapp.com";
+				//var server = this.scene.get("open").server == "us" ? "https://swordbattle.codergautamyt.repl.co" : "https://swordbattle.herokuapp.com";
 				//server = undefined
-				this.socket = io(server);
+				this.socket = io();
 				
 				function handleErr(err) {
 					document.write("Failed to connect to the server, please try a different server or contact devs.<br>" + err+"<br><br>");

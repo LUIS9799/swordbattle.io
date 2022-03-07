@@ -1,7 +1,6 @@
 var intersects = require("intersects");
 const PlayerList = require("./PlayerList");
 const Coin = require("./Coin.js");
-const {sql} = require("../database");
 function getRandomInt(min, max) {
   return min + Math.floor(Math.random() * (max - min + 1));
 }
@@ -221,7 +220,7 @@ var move = true;
               if(!this.ai) {
               var socketById = io.sockets.sockets.get(this.id);
               
-             sql`INSERT INTO games (id, name, coins, kills, time, verified) VALUES (${this.id}, ${this.name}, ${this.coins}, ${this.kills}, ${Date.now() - this.joinTime}, ${this.verified})`;
+        //     sql`INSERT INTO games (id, name, coins, kills, time, verified) VALUES (${this.id}, ${this.name}, ${this.coins}, ${this.kills}, ${Date.now() - this.joinTime}, ${this.verified})`;
               
               socketById.emit("youWon", {
                 timeSurvived: Date.now() - this.joinTime,
@@ -346,7 +345,7 @@ return false;
               if(!this.ai && socket) socket.emit("dealHit", enemy.id);
               if(!enemy.ai && socketById) socketById.emit("takeHit", this.id);
               //enemy has 0 or less than 0 health, time to kill
-            if(!enemy.ai) sql`INSERT INTO games (id, name, coins, kills, time, verified, killedby, killerverified) VALUES (${enemy.id}, ${enemy.name}, ${enemy.coins}, ${enemy.kills}, ${Date.now() - enemy.joinTime}, ${enemy.verified}, ${this.name}, ${this.verified})`;
+           // if(!enemy.ai) sql`INSERT INTO games (id, name, coins, kills, time, verified, killedby, killerverified) VALUES (${enemy.id}, ${enemy.name}, ${enemy.coins}, ${enemy.kills}, ${Date.now() - enemy.joinTime}, ${enemy.verified}, ${this.name}, ${this.verified})`;
 
               //increment killcount by 1
               this.kills += 1;
