@@ -11,7 +11,7 @@ var fs = require("fs");
 
 // Import the functions you need from the SDKs you need
 const { initializeApp } =  require("firebase/app");
-const {getFirestore,collection,addDoc, Timestamp} = require("firebase/firestore");
+const {getFirestore,collection,addDoc, Timestamp, query, where, getDocs, orderBy, limit} = require("firebase/firestore");
 
 const firebaseConfig = {
   apiKey: process.env.apiKey,
@@ -350,16 +350,25 @@ app.get("/shop", async (req, res) => {
 });
 
 app.get("/leaderboard", async (req, res) => {
+	console.log("recieved a request")
+	/*
+	const q = query(collection(db, "games"), where("created_at", "<", new Date("2017-01-01")));
+	var rers = await getDocs(q);
+	var data =  rers.docs
+	data.forEach(async (doc) => {
+		console.log(await doc.data())
+	});	
+	*/
 	//SELECT * from games where EXTRACT(EPOCH FROM (now() - created_at)) < 86400 ORDER BY coins DESC LIMIT 10
- 
+ console.time()
 	//var lb= await sql`SELECT * FROM games ORDER BY coins DESC LIMIT 13`;
 	var type =["coins", "kills", "time","xp"].includes(req.query.type) ? req.query.type : "coins";
 	var duration  = ["all", "day", "week","xp"].includes(req.query.duration) ? req.query.duration : "all";
+	var queries = [];
 	if(type !== "xp") {
 	if(duration != "all") {
-		var lb = await sql`SELECT * from games where EXTRACT(EPOCH FROM (now() - created_at)) < ${duration == "day" ? "86400" : "608400"} ORDER BY ${ sql(type) } DESC, created_at DESC LIMIT 23`;
-	} else {
-		var lb = await sql`SELECT * from games ORDER BY ${ sql(type) } DESC, created_at DESC LIMIT 23`;
+		var e = (duration == "day" ? "86400" : "608400");
+		queries.push(where("created_at", ">", new Date(Date.now() - (e * 1000))));
 	}
 } else {
 	if(duration != "all") {
@@ -372,10 +381,21 @@ app.get("/leaderboard", async (req, res) => {
 		return x;
 	});
 }
-	
-	console.log(type, duration);
+console.timeEnd();
+console.time();
+const q = query(collection(db, "games"), ...queries, limit(23), orderBy(type, "desc"));
+var rers = await getDocs(q);
+var data =  rers.docs;
+console.timeEnd();
+console.time();
+var lb = [];
+data.forEach(async (doc) => {
+	lb.push(await doc.data());
+});	
 	res.render("leaderboard.ejs", {lb: lb, type: type, duration: duration});
+	
 });
+
 
 app.get("/settings", async (req, res) => {
 	res.send("I'm still working on this page.<br><br>For now, if you want to change password, or change your username, please email me at<br>gautamgxtv@gmail.com");
