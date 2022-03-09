@@ -6,6 +6,23 @@ function getRandomInt(min, max) {
 }
 var map = 10000;
 
+const { initializeApp } =  require("firebase/app");
+const {getFirestore,collection,addDoc, Timestamp} = require("firebase/firestore");
+
+const firebaseConfig = {
+  apiKey: process.env.apiKey,
+  authDomain: process.env.projectId + ".firebaseapp.com",
+  databaseURL: "https://"+process.env.projectId+".firebaseio.com",
+  projectId: process.env.projectId,
+  storageBucket: process.env.projectId + ".appspot.com",
+  messagingSenderId: process.env.messagingSenderId,
+  appId: process.env.appId,
+};
+
+// Initialize Firebase
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+
 class Player { 
   constructor(id, name) {
     this.ai = false;
@@ -222,6 +239,27 @@ var move = true;
               
         //     sql`INSERT INTO games (id, name, coins, kills, time, verified) VALUES (${this.id}, ${this.name}, ${this.coins}, ${this.kills}, ${Date.now() - this.joinTime}, ${this.verified})`;
               
+        var dbObj = {
+          id: this.id,
+          name: this.name,
+          skin: this.skin,
+          coins: this.coins,
+          kills: this.kills,
+          time: Date.now() - this.joinTime,
+          verified: this.verified,
+          created_at: Timestamp.fromDate(new Date()),
+        };
+        
+        
+        try {
+          const docRef = addDoc(collection(db, "games"), dbObj).then((e) => {
+          
+          });
+        } catch (e) {
+          console.error("Error adding document: ", e);
+        }
+
+
               socketById.emit("youWon", {
                 timeSurvived: Date.now() - this.joinTime,
               });
@@ -345,7 +383,29 @@ return false;
               if(!this.ai && socket) socket.emit("dealHit", enemy.id);
               if(!enemy.ai && socketById) socketById.emit("takeHit", this.id);
               //enemy has 0 or less than 0 health, time to kill
-           // if(!enemy.ai) sql`INSERT INTO games (id, name, coins, kills, time, verified, killedby, killerverified) VALUES (${enemy.id}, ${enemy.name}, ${enemy.coins}, ${enemy.kills}, ${Date.now() - enemy.joinTime}, ${enemy.verified}, ${this.name}, ${this.verified})`;
+            if(!enemy.ai) {
+              var dbObj = {
+                id: enemy.id,
+                name: enemy.name,
+                skin: enemy.skin,
+                coins: enemy.coins,
+                kills: enemy.kills,
+                time: Date.now() - enemy.joinTime,
+                verified: enemy.verified,
+                created_at: Timestamp.fromDate(new Date()),
+                killed_by: this.name,
+                killer_verified: this.verified,
+              };
+              
+              
+              try {
+                const docRef = addDoc(collection(db, "games"), dbObj).then((e) => {
+                
+                });
+              } catch (e) {
+                console.error("Error adding document: ", e);
+              }
+            }
 
               //increment killcount by 1
               this.kills += 1;
