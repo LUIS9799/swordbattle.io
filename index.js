@@ -218,9 +218,10 @@ app.post("/api/signup", async (req, res) => {
 		res.send({error: "Username contains a bad word!\nIf this is a mistake, please contact an admin."});
 		return;
 	}
-	var exists = await sql`select exists(select 1 from accounts where lower(username)=lower(${username}))`;
+	const q = query(collection(db, "users"), where("username","==",username), limit(1));
+var rers = await getDocs(q);
 
-	if (exists[0].exists) {
+	if (rers.docs.length > 0) {
 		res.send({error: "Username already taken"});
 		return;
 	}
@@ -231,8 +232,19 @@ app.post("/api/signup", async (req, res) => {
 			return;
 		}
 		var secret = uuid.v4();
-		sql`insert into accounts(username, password, email, secret, skins, lastlogin) values(${username}, ${hash}, ${req.body.email}, ${secret}, ${JSON.stringify({collected: ["player"], selected: "player"})}, ${Date.now()})`;
-		res.send({secret: secret});
+		var user = {
+			username: username,
+			password: hash,
+			email: req.body.email,
+			secret: secret,
+			skins: {collected: ["player"], selected: "player"},
+			created_at: Timestamp.fromDate(new Date())
+		};
+		addDoc(collection(db, "users"), user).then((e) => {
+
+			res.send({secret: secret});
+		});
+
 	});
 
 
@@ -248,20 +260,23 @@ app.post("/api/login", async (req, res) => {
 	async function doit() {
 	var username = req.body.username;
 	var password = req.body.password;
-	var account = await sql`select * from accounts where lower(username)=lower(${username})`;
-
-	if(!account[0]) {
-		res.send({error: "Invalid username"});
+	var q = query(collection(db, "users"), where("username","==",username), limit(1));
+	var rers = await getDocs(q);
+	if (rers.docs.length == 0) {
+		res.send({error: "Username not found"});
 		return;
 	}
 
-	const match = await bcrypt.compare(password, account[0].password);
-	if(!match) {
-		res.send({error: "Invalid password"});
+	var user = rers.docs[0].data();
+	var hash = user.password;
+	const result = await bcrypt.compare(password, hash);
+	if(!result) {
+		res.send({error: "Incorrect password"});
 		return;
 	}
+	user.password = undefined;
 	
-	res.send(account[0]);
+	res.send(user);
 	}
 	var send = {
 		secret: process.env.CAPTCHASECRET,
@@ -300,14 +315,15 @@ app.post("/api/loginsecret", async (req, res) => {
 	async function doit() {
 	var secret = req.body.secret;
 	
-	var account = await sql`select * from accounts where secret=${secret}`;
-
-	if(!account[0]) {
+	var q = query(collection(db, "users"), where("secret","==",secret), limit(1));
+	var rers = await getDocs(q);
+	if(rers.docs.length == 0) {
 		res.send({error: "Invalid secret"});
 		return;
 	}
 
-	res.send(account[0]);
+
+	res.send(rers.docs[0].data());
 
 	}
 	var send = {
@@ -350,7 +366,6 @@ app.get("/shop", async (req, res) => {
 });
 
 app.get("/leaderboard", async (req, res) => {
-	console.log("recieved a request")
 	/*
 	const q = query(collection(db, "games"), where("created_at", "<", new Date("2017-01-01")));
 	var rers = await getDocs(q);
@@ -360,7 +375,6 @@ app.get("/leaderboard", async (req, res) => {
 	});	
 	*/
 	//SELECT * from games where EXTRACT(EPOCH FROM (now() - created_at)) < 86400 ORDER BY coins DESC LIMIT 10
- console.time()
 	//var lb= await sql`SELECT * FROM games ORDER BY coins DESC LIMIT 13`;
 	var type =["coins", "kills", "time","xp"].includes(req.query.type) ? req.query.type : "coins";
 	var duration  = ["all", "day", "week","xp"].includes(req.query.duration) ? req.query.duration : "all";
@@ -381,16 +395,14 @@ app.get("/leaderboard", async (req, res) => {
 		return x;
 	});
 }
-console.timeEnd();
-console.time();
+
 const q = query(collection(db, "games"), ...queries, limit(23), orderBy(type, "desc"));
 var rers = await getDocs(q);
 var data =  rers.docs;
-console.timeEnd();
-console.time();
+
 var lb = [];
-data.forEach(async (doc) => {
-	lb.push(await doc.data());
+data.forEach((doc) => {
+	lb.push(doc.data());
 });	
 	res.render("leaderboard.ejs", {lb: lb, type: type, duration: duration});
 	
@@ -402,12 +414,24 @@ app.get("/settings", async (req, res) => {
 });
 
 app.get("/:user", async (req, res, next) => {
+
 	var user = req.params.user;
-	var dbuser  = await sql`SELECT * from accounts where lower(username)=lower(${user})`;
-	if(!dbuser[0]) {
-		next();
-	} else {
-		var yo = await sql`SELECT * FROM games WHERE lower(name)=${user.toLowerCase()} AND verified='true';`;
+	if(user == "leaderboard") return;
+	//check if user has a period
+	if(user.includes(".")) return;
+	var q = query(collection(db, "users"), where("username", "==", user), limit(1));
+	var rers = await getDocs(q);
+	if(rers.docs.length == 0) return next();
+	var me = rers.docs[0].data();
+	var accId = rers.docs[0].id;
+	q = query(collection(db, "games"), where("accountId", "==", accId));
+	rers = await getDocs(q);
+	var games = rers.docs.map(x => x.data());
+
+	//timestamp to date
+	me.created_at = new Date(new Date(me.created_at.seconds * 1000).toUTCString());
+
+/*
 		var stats = await sql`
 		select a.dt,b.name,b.xp,b.kills from
 		(
@@ -420,9 +444,10 @@ app.get("/:user", async (req, res, next) => {
 		`;
 		var lb = await sql`select name,(sum(coins)+(sum(kills)*100)) as xp from games where verified = true group by name order by xp desc`;
 		var lb2 = await sql`select name,(sum(coins)+(sum(kills)*100)) as xp from games where verified = true and EXTRACT(EPOCH FROM (now() - created_at)) < 86400 group by name order by xp desc`;
-		res.render("user.ejs", {user: dbuser[0], games: yo, stats: stats, lb: lb, lb2: lb2});
+		*/
+		res.render("user.ejs", {user: me, games: games, lb:[], lb2:[], stats:[]});
 		
-	}
+	
 });
 
 
@@ -464,13 +489,15 @@ io.on("connection", async (socket) => {
 				}
 
 			} else {
-				var accounts = await sql`select * from accounts where secret=${r}`;
-				if(!accounts[0]) {
+				var q = query(collection(db, "users"), where("secret", "==", r), limit(1));
+				var rers = await getDocs(q);
+				if(rers.docs.length == 0) {
 					socket.emit("ban", "Invalid secret, please try logging out and relogging in");
 					socket.disconnect();
 					return;
 				}
-		var name = accounts[0].username;
+				var account = rers.docs[0].data();
+				var name = account.username;
 
 			}
 
@@ -483,7 +510,8 @@ io.on("connection", async (socket) => {
 
 				if(tryverify) {
 					thePlayer.verified = true;
-					thePlayer.skin = accounts[0].skins.selected;
+					thePlayer.skin = account.skins.selected;
+					thePlayer.accountId = rers.docs[0].id;
 				}
 
 				
@@ -608,6 +636,7 @@ io.on("connection", async (socket) => {
 			time: Date.now() - thePlayer.joinTime,
 			verified: thePlayer.verified,
 			created_at: Timestamp.fromDate(new Date()),
+			accountId: thePlayer.accountId,
 		};
 		
 		try {

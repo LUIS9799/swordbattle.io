@@ -252,7 +252,11 @@ this.callback(myName, this.music, this.secret);
         }).catch((err) => {
           console.log("Login Error: ");
           console.log(err);
-          alert("Failed to login automatically, please try manually.");
+          alert("Failed to login automatically, please refresh.\nWe have logged you out.");
+          window.localStorage.removeItem("secret");
+          location.reload();
+
+
         });
       });
     });
