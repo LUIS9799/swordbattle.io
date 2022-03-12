@@ -104,7 +104,7 @@ if(recent) {
  // date = new Date(date.valueOf() + recent.time);
 
   //time since Date
-  var timeSince =(new Date(new Date().toUTCString().slice(0, -3)))- date;
+  var timeSince =(new Date(new Date().toString().slice(0, -3)))- date;
   //time since in seconds
   timeSince = timeSince / 1000;
   //convert to readable format

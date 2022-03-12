@@ -430,6 +430,10 @@ app.get("/:user", async (req, res, next) => {
 
 	//timestamp to date
 	me.created_at = new Date(new Date(me.created_at.seconds * 1000).toUTCString());
+	games.map(x => {
+		x.created_at = new Date(new Date(x.created_at.seconds * 1000).toUTCString());
+		return x;
+	});
 
 /*
 		var stats = await sql`

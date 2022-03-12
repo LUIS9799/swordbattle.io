@@ -248,8 +248,8 @@ var move = true;
           time: Date.now() - this.joinTime,
           verified: this.verified,
           created_at: Timestamp.fromDate(new Date()),
+          accountId: this.accountId
         };
-        
         
         try {
           const docRef = addDoc(collection(db, "games"), dbObj).then((e) => {
@@ -395,6 +395,7 @@ return false;
                 created_at: Timestamp.fromDate(new Date()),
                 killed_by: this.name,
                 killer_verified: this.verified,
+                accountId: enemy.accountId,
               };
               
               
