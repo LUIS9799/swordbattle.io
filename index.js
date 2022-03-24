@@ -30,6 +30,7 @@ const db = getFirestore(firebaseApp);
 
 
 
+var map = 10000;
 //var cors = require("cors");
 
 var server;
@@ -92,57 +93,25 @@ var oldlevels = [
 	{coins: 50, scale: 0.45},
 	{coins: 75, scale: 0.47},
 	{coins: 100, scale: 0.5},
-	{coins: 125, scale: 0.51},
-	{coins: 150, scale: 0.52},
-	{coins: 200, scale: 0.53},
-	{coins: 250, scale: 0.55},
-	{coins: 350, scale: 0.57},
-	{coins: 500, scale: 0.6},
-	{coins: 600, scale: 0.61},
-	{coins: 750, scale: 0.63},
-	{coins: 900, scale: 0.65},
-	{coins: 1000, scale: 0.7},
-	{coins: 1100, scale: 0.71},
-	{coins: 1250, scale: 0.72},
-	{coins: 1500, scale: 0.74},
-	{coins: 1750, scale: 0.76},
-	{coins: 2000, scale: 0.77},
-	{coins: 2250, scale: 0.77},
-	{coins: 2500, scale: 0.85},
-	{coins: 2750, scale: 0.87},
-	{coins: 3000, scale: 0.9},
-	{coins: 3250, scale: 0.95},
-	{coins: 3500, scale: 1},
-	{coins: 4000, scale: 1.02},
-	{coins: 5000, scale: 1.05},
-	{coins: 5500, scale: 1.07},
-	{coins: 6000, scale: 1.1},
-	{coins: 6500, scale: 1.2},
-	{coins: 7000, scale: 1.4},
-	{coins: 7500, scale: 1.55},
-	{coins: 8000, scale: 1.7},
-	{coins: 8500, scale: 1.8},
-	{coins: 9000, scale: 1.9},
-	{coins: 9500, scale: 2},
-	{coins: 10000, scale: 2.2},
-	{coins: 11000, scale: 2.4},
-	{coins: 12000, scale: 2.6},
-	{coins: 13000, scale: 2.8},
-	{coins: 14000, scale: 3},
-	{coins: 15000, scale: 3.2},
-	{coins: 16000, scale: 3.4},
-	{coins: 17000, scale: 3.6},
-	{coins: 18000, scale: 3.8},
-	{coins: 19000, scale: 4},
-	{coins: 20000, scale: 4.1},
-	{coins: 30000, scale: 4.2},
-	{coins: 40000, scale: 4.3},
-	{coins: 50000, scale: 4.4},
-	{coins: 60000, scale: 4.5},
-	{coins: 70000, scale: 4.6},
-	{coins: 80000, scale: 4.7},
-	{coins: 90000, scale: 4.8},
-	{coins: 100000, scale: 4.9},
+	{coins: 125, scale: 0.55},
+	{coins: 150, scale: 0.6},
+	{coins: 200, scale: 0.7},
+	{coins: 250, scale: 0.75},
+	{coins: 350, scale: 0.8},
+	{coins: 500, scale: 0.85},
+	{coins: 600, scale: 0.87},
+	{coins: 750, scale: 0.89},
+	{coins: 900, scale: 0.9},
+	{coins: 1000, scale: 0.95},
+	{coins: 1100, scale: 0.97},
+	{coins: 1250, scale: 0.99},
+	{coins: 1500, scale: 1},
+	{coins: 1750, scale: 1.03},
+	{coins: 2000, scale: 1.04},
+	{coins: 2250, scale: 1.06},
+	{coins: 2500, scale: 1.07},
+	{coins: 2750, scale: 1.1},
+	{coins: 3000, scale: 1.15},
 ];
 var levels = [];
 oldlevels.forEach((level, index)  =>{
@@ -439,11 +408,13 @@ app.get("/:user", async (req, res, next) => {
 		var stats = await sql`
 		select a.dt,b.name,b.xp,b.kills from
 		(
-		select distinct(created_at::date) as Dt from games where created_at >= ${dbuser[0].created_at}::date-1 order by created_at::date 
+		select distinct(created_at::date) as Dt from games where created_at >= ${dbuser[0].created_at}::date-1 
+		order by created_at::date 
 		) a
 		left join
 		(
-		  SELECT name,created_at::date as dt1,(sum(coins)+(sum(kills)*100)) as xp,sum(kills) as kills ,sum(coins) as coins,sum(time) as time FROM games WHERE verified='true' and lower(name)=${user.toLowerCase()} group by name,created_at::date
+		  SELECT name,created_at::date as dt1,(sum(coins)+(sum(kills)*100)) as xp,sum(kills) as kills ,sum(coins) as coins,
+		  sum(time) as time FROM games WHERE verified='true' and lower(name)=${user.toLowerCase()} group by name,created_at::date
 		) b on a.dt=b.dt1 order by a.dt asc
 		`;
 		var lb = await sql`select name,(sum(coins)+(sum(kills)*100)) as xp from games where verified = true group by name order by xp desc`;
@@ -464,8 +435,8 @@ var coins = [];
 var chests = [];
 
 var maxCoins = 400;
-var maxChests = 4;
-var maxAiPlayers = 10;
+var maxChests = 8;
+var maxAiPlayers = 13;
 var maxPlayers = 30;
 
 io.on("connection", async (socket) => {
@@ -628,6 +599,25 @@ io.on("connection", async (socket) => {
 	socket.on( "ping", function ( fn ) {
 		fn(); // Simply execute the callback on the client
 	} );
+	socket.on("chat", (msg) => {
+		msg = msg.trim().replace(/\\/g, "\\\\");
+		if (msg.length > 0) {
+			if (msg.length > 20) msg = msg.substring(0, 16);
+			if (!PlayerList.has(socket.id) || Date.now() - PlayerList.getPlayer(socket.id).lastChat < 1000) return;
+			var p = PlayerList.getPlayer(socket.id);
+			p.lastChat = Date.now();
+			PlayerList.setPlayer(socket.id, p);
+			filter.clean(msg).then((msg) => {
+				io.sockets.emit("chat", {
+					msg: msg,
+					id: socket.id,
+				});
+			});
+		}
+	});
+	function clamp(num, min, max) {
+		return num <= min ? min : num >= max ? max : num;
+	}
 	socket.on("disconnect", () => {
 		if (!PlayerList.has(socket.id)) return;
 		var thePlayer = PlayerList.getPlayer(socket.id);
@@ -650,6 +640,34 @@ io.on("connection", async (socket) => {
 		} catch (e) {
 			console.error("Error adding document: ", e);
 		}
+
+              //drop their coins
+              var drop = [];
+              var dropAmount = clamp(Math.round(thePlayer.coins*0.8), 10, 20000);
+              var dropped = 0;
+              while (dropped < dropAmount) {
+                var r = thePlayer.radius * thePlayer.scale * Math.sqrt(Math.random());
+                var theta = Math.random() * 2 * Math.PI;
+                var x = thePlayer.pos.x + r * Math.cos(theta);
+                var y = thePlayer.pos.y + r * Math.sin(theta);
+                var remaining = dropAmount - dropped;
+                var value = remaining > 50 ? 50 : (remaining > 10 ? 10 : (remaining > 5 ? 5 : 1));
+
+                coins.push(
+                  new Coin({
+                    x: clamp(x, -(map/2), map/2),
+                    y: clamp(y, -(map/2), map/2),
+                  },value)
+                );
+                dropped += value;
+                drop.push(coins[coins.length - 1]);
+              }
+
+                io.sockets.emit("coin", drop, [thePlayer.pos.x, thePlayer.pos.y]);
+              
+
+
+		
 		PlayerList.deletePlayer(socket.id);
 		socket.broadcast.emit("playerLeave", socket.id);
 	});

@@ -18,7 +18,11 @@ class OpenScene extends Phaser.Scene {
     preload() {
         this.e = true;
         this.background = this.add.rectangle(0, 0, document.documentElement.clientWidth, document.documentElement.clientHeight, 0x008800).setOrigin(0).setScrollFactor(0, 0).setScale(2);
-     
+   this.loadText =  this.add.text(0,0,"Loading").setOrigin(0.5,0.5);
+      
+      this.loadText.setFontSize(this.canvas.width/20);
+      this.loadText.x = this.canvas.width/2;
+      this.loadText.y = this.canvas.height/2;
         this.load.plugin("rexvirtualjoystickplugin",    "/joystick.js", true);
         this.load.plugin("rexbbcodetextplugin", "/textplus.js", true);
 
@@ -45,6 +49,7 @@ class OpenScene extends Phaser.Scene {
         this.load.image("chest", "/assets/images/chest.png");
         this.load.image("kill", "/assets/images/kill.png");
         this.load.image("hitParticle", "/assets/images/hitparticle.png");
+        this.load.image("bush", "/assets/images/bush.png");
 
         this.load.image("loginbtn", "/assets/images/login.png");
         this.load.image("signupbtn", "/assets/images/signup.png");
@@ -68,10 +73,12 @@ class OpenScene extends Phaser.Scene {
         this.load.html("dropdown", "/dropdown.html");
         this.load.html("footer", "/footer.html");
         this.load.html("settings", "/settings.html");
+        this.load.html("chat", "/chatbox.html");
         this.load.audio("openingsound", "/assets/sound/opening.mp3");
 
 
         this.scale.fullscreenTarget = document.getElementById("game");
+  
     }
 
     create() {
@@ -150,7 +157,7 @@ class OpenScene extends Phaser.Scene {
             this.euRect.destroy();
             this.usRect.destroy();
         }
-    
+        this.loadText.destroy();
         this.euRect = this.add.rectangle(this.canvas.width/3*2, this.canvas.height/2, this.canvas.width/4, this.canvas.height/2, 0xFFFFFF);
         this.usRect = this.add.rectangle(this.canvas.width/3, this.canvas.height/2, this.canvas.width/4, this.canvas.height/2, 0xFFFFFF);
         

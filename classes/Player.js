@@ -37,6 +37,7 @@ class Player {
     this.scale = 0.25;
     this.damage = 10;
     this.level = 1;
+    this.lastChat = Date.now();
     this.damageCooldown = 100;
     this.verified = false;
     
@@ -70,10 +71,10 @@ class Player {
     var power = distance(this.mousePos.x, this.mousePos.y, this.mousePos.viewport.width/2, this.mousePos.viewport.height/2);
 power = (power/((this.mousePos.viewport.height+this.mousePos.viewport.width)/2))*100;
 
-if(power > 15) power = 100;
-else power *= 100/15;
+if(power > 20) power = 100;
+else power *= 100/20;
 
-if(power < 10)  power = 0;
+if(power < 15)  power = 0;
 go *= power/100;
 
         const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
@@ -214,7 +215,7 @@ var move = true;
     
     var oldPos = this.pos;
 
-    var pos = this.movePointAtAngle([this.pos.x, this.pos.y], (player.calcSwordAngle()+45)*Math.PI/180 , player.power-this.resistance);
+  var pos = this.movePointAtAngle([this.pos.x, this.pos.y], (player.calcSwordAngle()+45)*Math.PI/180 , Math.max(player.power-this.resistance,50));
     
     this.pos.x = clamp(pos[0], -(map/2), map/2);
     this.pos.y = clamp(pos[1],-(map/2), map/2);
@@ -224,61 +225,32 @@ var move = true;
     }
   }
   collectCoins(coins, io, levels) {
+    
+
            var touching = coins.filter((coin) => coin.touchingPlayer(this));
 
         touching.forEach((coin) => {
-          //this.coins += (this.ai?coin.value:100);
+          //this.coins += (this.ai?coin.value:140);
           this.coins+= coin.value;
           if(this.level-1 != levels.length && this.coins >= levels[this.level-1].coins) {
             //lvl up!
-
-            if (this.level == levels.length) {
-              //yay you won!
-              if(!this.ai) {
-              var socketById = io.sockets.sockets.get(this.id);
-              
-        //     sql`INSERT INTO games (id, name, coins, kills, time, verified) VALUES (${this.id}, ${this.name}, ${this.coins}, ${this.kills}, ${Date.now() - this.joinTime}, ${this.verified})`;
-              
-        var dbObj = {
-          id: this.id,
-          name: this.name,
-          skin: this.skin,
-          coins: this.coins,
-          kills: this.kills,
-          time: Date.now() - this.joinTime,
-          verified: this.verified,
-          created_at: Timestamp.fromDate(new Date()),
-          accountId: this.accountId
-        };
-        
-        try {
-          const docRef = addDoc(collection(db, "games"), dbObj).then((e) => {
           
-          });
-        } catch (e) {
-          console.error("Error adding document: ", e);
-        }
+            if(this.level != levels.length) {
 
-
-              socketById.emit("youWon", {
-                timeSurvived: Date.now() - this.joinTime,
-              });
-              socketById.broadcast.emit("playerDied", this.id);
-              } else {
-    io.sockets.emit("playerDied", this.id);
-              }
-    
-              //delete the player
-              PlayerList.deletePlayer(this.id);
-    
-              //disconnect the player
-              if(!this.ai) socketById.disconnect();
-            } else {
-              var lvl = levels[this.level-1];
-              this.level += 1;
-              this.scale = lvl.scale;
+            
+   
+                //calculate new level
+                levels.forEach((level, i) => {
+                  if(this.coins >= level.coins) {
+                    this.level = i+2;
+                    this.scale = level.scale;
+                  }
+                });
+                
             }
+            
           }
+
 
           var index = coins.findIndex((e) => e.id == coin.id);
           coins.splice(index, 1);
@@ -332,12 +304,13 @@ return false;
     this.maxHealth = this.scale * 400;
     this.health = percent * this.maxHealth;
     this.damage =  (80 * this.scale > 30 ? 30 +(((80 * this.scale) - 30) / 5) : 80 * this.scale );
-    this.speed = clamp(740 - (convert(0.25, 1, this.scale) * 40),200,700);
+    this.speed = clamp(740 -  (this.scale* 160),350,570);
 
     this.power = convert(0.25, 200, this.scale);
     this.resistance = convert(0.25, 20, this.scale);
 
-    this.damageCooldown = 50 + (this.level * 5);
+    this.damageCooldown = 50 + (this.level * 12);
+
 
   }
   down(down, coins, io, chests) {
@@ -419,6 +392,7 @@ return false;
               socketById.emit("youDied", {
                 killedBy: this.name,
                 killerVerified: this.verified,
+                killedById: this.id,
                 timeSurvived: Date.now() - enemy.joinTime,
               });
             
@@ -432,7 +406,7 @@ return false;
               }
               //drop their coins
               var drop = [];
-              var dropAmount = clamp(Math.round(enemy.coins*0.8), 10, 10000);
+              var dropAmount = clamp(Math.round(enemy.coins*0.8), 10, 20000);
               var dropped = 0;
               while (dropped < dropAmount) {
                 var r = enemy.radius * enemy.scale * Math.sqrt(Math.random());
@@ -451,11 +425,9 @@ return false;
                 dropped += value;
                 drop.push(coins[coins.length - 1]);
               }
-              if(!enemy.ai && socketById) {
-              socketById.broadcast.emit("coin", drop, [enemy.pos.x, enemy.pos.y]);
-              } else {
+  
                 io.sockets.emit("coin", drop, [enemy.pos.x, enemy.pos.y]);
-              }
+              
               //log a message
               console.log(this.name+" killed " + enemy.name);
 
@@ -463,13 +435,16 @@ return false;
               PlayerList.deletePlayer(enemy.id);
 
               //disconnect the socket
-              if(!enemy.ai && socketById) socketById.disconnect();
+            // if(!enemy.ai && socketById) socketById.disconnect();
             } else {
               enemy.doKnockback(this);
               if(!this.ai && socket) socket.emit("dealHit", enemy.id, enemy.pos);
               if(!enemy.ai && socketById) socketById.emit("takeHit", this.id, this.pos);
             }
           } else {
+            enemy.doKnockback(this);
+            if(!this.ai && socket) socket.emit("dealHit", enemy.id);
+            if(!enemy.ai && socketById) socketById.emit("takeHit", this.id);
           }
         }
         }
